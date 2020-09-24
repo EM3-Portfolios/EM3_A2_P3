@@ -1,6 +1,6 @@
 ---
 title: "Assignment 1 - Language Development in ASD - Power and simulations"
-author: "[YOUR NAME]"
+author: "[Cecilie]"
 date: "[DATE]"
 output: html_document
 ---
@@ -23,6 +23,13 @@ The list above is also what you should discuss in your code-less report.
 - Learn how to calculate statistical power
 - Critically appraise how to apply frequentist statistical power
 
+
+```{r}
+#loading packages
+library(simr)
+```
+
+
 ### Exercise 1
 
 How much power does your study have (if your model estimates are quite right)?
@@ -38,6 +45,33 @@ You will be using:
 - extend() to simulate more participants
 
 ```{r}
+traindf <- read.csv("data_clean.csv")
+
+library(simr)
+m <- lmer(types_CHI ~ Visit + Diagnosis + (1 + Visit | Child.ID), df, REML = FALSE)
+
+
+
+# the one from the lecture using visit:
+powerV <- powerSim(m, fixed("Visit"), nsim = 50)
+fixef(m)["Visit"] <- 10
+powerCurveV <- powerCurve(m, fixed("Visit"), along = "Child.ID", nsim = 50)
+powerV
+plot(powerCurveV)
+
+
+
+
+# the one with diagnosis
+powerD <- powerSim(m, fixed("Diagnosis"), nsim = 50) # warning: "this appears to be an observed power calculation"
+powerD
+
+fixef(m)["DiagnosisTD"] <- 30
+# "Minimum effect size we care for"
+
+# ploting a power curve
+powerCurveD <- powerCurve(m, fixed("Diagnosis"), along = "Child.ID", nsim = 5) 
+plot(powerCurveD)
 
 ```
 
@@ -52,6 +86,7 @@ How would you perform a more conservative power analysis?
 - Report the power analysis and comment on what you can (or cannot) use its estimates for.
 
 ```{r}
+
 
 ```
 
