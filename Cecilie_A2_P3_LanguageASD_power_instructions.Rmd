@@ -26,7 +26,7 @@ The list above is also what you should discuss in your code-less report.
 
 ```{r}
 #loading packages
-library(simr)
+library(simr, lme4)
 ```
 
 
@@ -44,24 +44,34 @@ You will be using:
 - powerCurve() to estimate the needed number of participants
 - extend() to simulate more participants
 
-```{r}
-traindf <- read.csv("data_clean.csv")
+```{r loding the data}
+df_train <- read.csv("data_clean.csv")
+df_test <- read.csv("cleantestdf.csv")
 
-library(simr)
-m <- lmer(types_CHI ~ Visit + Diagnosis + (1 + Visit | Child.ID), df, REML = FALSE)
+```
 
 
 
+```{r making the model}
+
+m <- lmer(types_CHI ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df_train, REML = FALSE)
+
+```
+
+
+```{r thing}
 # the one from the lecture using visit:
 powerV <- powerSim(m, fixed("Visit"), nsim = 50)
+
 fixef(m)["Visit"] <- 10
+
 powerCurveV <- powerCurve(m, fixed("Visit"), along = "Child.ID", nsim = 50)
 powerV
 plot(powerCurveV)
+```
 
 
-
-
+```{r thing}
 # the one with diagnosis
 powerD <- powerSim(m, fixed("Diagnosis"), nsim = 50) # warning: "this appears to be an observed power calculation"
 powerD
