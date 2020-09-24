@@ -37,8 +37,18 @@ You will be using:
 - powerCurve() to estimate the needed number of participants
 - extend() to simulate more participants
 
-```{r}
+```{r loading data}
+pacman::p_load(simr, lme4)
 
+df_train <- read.csv("data_clean.csv")
+
+df_test <- read.csv("cleantestdf.csv")
+```
+
+
+
+```{r recreating model}
+m <- lmer(Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df_train)
 ```
 
 
