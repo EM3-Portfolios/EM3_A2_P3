@@ -38,13 +38,33 @@ You will be using:
 - extend() to simulate more participants
 
 ```{r}
-
 #Load packages
-pacman::p_load(lme4, simR)
+pacman::p_load(lmerTest, simr, lme4)
 
 #Load dataframes
-df_train <- ("/Users/al/RStudio/Semester 3/Experimental-Methods-3/Assignment 2/EM3_A2_P3/data_clean.csv")
-df_test <- ("/Users/al/RStudio/Semester 3/Experimental-Methods-3/Assignment 2/EM3_A2_P3/cleantestdf.csv")
+df_train <- read.csv("/Users/al/RStudio/Semester 3/Experimental-Methods-3/Assignment 2/EM3_A2_P3/data_clean.csv")
+df_test <- read.csv("/Users/al/RStudio/Semester 3/Experimental-Methods-3/Assignment 2/EM3_A2_P3/cleantestdf.csv")
+
+```
+```{r}
+
+#Loading the decided model
+m <- lmer(CHI_MLU ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df_train, REML=FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+
+#Deleting NAs from the columns/variables that we are interested in
+completeFun <- function(data, desiredCols) {
+  completeVec <- complete.cases(data[, desiredCols])
+  return(data[completeVec, ])
+}
+
+df_train <- completeFun(df_train, "CHI_MLU")
+
+#Assessing power for our effects of interest
+powerV <- powerSim(m, fixed("Diagnosis:Visit"), nsim = 50)
+#fixef(m)["Diagnosis:Visit"] <- 10
+powerCurveV <- powerCurve(m, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50)
+powerV
+plot(powerCurveV)
 
 ```
 
@@ -59,6 +79,8 @@ How would you perform a more conservative power analysis?
 - Report the power analysis and comment on what you can (or cannot) use its estimates for.
 
 ```{r}
+
+
 
 ```
 
