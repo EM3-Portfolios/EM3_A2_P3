@@ -42,15 +42,23 @@ You will be using:
 df_train <- read_csv("data_clean.csv")
 df_test <- read_csv("cleantestdf.csv")
 
+# Cleaning function to remove NAs for relevasnt varibales - 352
+completeFun <- function(data, desiredCols) {
+  completeVec <- complete.cases(data[, desiredCols])
+  return(data[completeVec, ])
+}
+df_train <- completeFun(df_train, "CHI_MLU")
+
+# Fitting our favorite model
 m <- lmer(CHI_MLU ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), data = df_train, REML = FALSE)
 ```
 
 ```{r assessing power for effects}
-powerV <- powerSim(m, fixed("Visit"), nsim = 50)
-fixef(m)["Visit"] <- 10
-powerCurveV <- powerCurve(m, fixed("Visit"), along = "Child.ID", nsim = 50)
-powerV
-plot(powerCurveV)
+powerDV <- powerSim(m, fixed("Diagnosis:Visit"), nsim = 50)
+fixef(m)["Diagnosis:Visit"] <- 10
+powerCurveDV <- powerCurve(m, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50)
+powerDV
+plot(powerCurveDV)
 ```
 
 
