@@ -39,6 +39,13 @@ You will be using:
 
 ```{r}
 
+#Load packages
+pacman::p_load(lme4, simR)
+
+#Load dataframes
+df_train <- ("/Users/al/RStudio/Semester 3/Experimental-Methods-3/Assignment 2/EM3_A2_P3/data_clean.csv")
+df_test <- ("/Users/al/RStudio/Semester 3/Experimental-Methods-3/Assignment 2/EM3_A2_P3/cleantestdf.csv")
+
 ```
 
 
