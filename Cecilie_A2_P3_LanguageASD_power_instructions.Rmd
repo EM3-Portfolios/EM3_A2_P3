@@ -48,20 +48,34 @@ You will be using:
 df_train <- read.csv("data_clean.csv")
 df_test <- read.csv("cleantestdf.csv")
 
+
+#removing NAs
+# Removing NAs from certain columns
+completeFun <- function(data, desiredCols) {
+  completeVec <- complete.cases(data[, desiredCols])
+  return(data[completeVec, ])
+}
+
+df_train <- completeFun(df_train, "CHI_MLU")
+
+
+
 ```
 
 
 
 ```{r making the model}
 
-m <- lmer(types_CHI ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df_train, REML = FALSE)
+m <- lmer(types_CHI ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df_train, REML = FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+
 
 ```
 
 
 ```{r thing}
 # the one from the lecture using visit:
-powerV <- powerSim(m, fixed("Visit"), nsim = 50)
+powerV <- powerSim(m, fixed("Diagnosis:Visit"), nsim = 50)
+powerV
 
 fixef(m)["Visit"] <- 10
 
