@@ -158,12 +158,13 @@ Assume you have only the resources to collect 30 kids (15 with ASD and 15 TDs). 
 ASD <- subset(df, Diagnosis == "ASD")
 TD <- subset(df, Diagnosis == "TD")
 
-#geting only 15 Children, by taking from the top.
+#geting only 15 Children, by taking from the top for TD.
 TD<- TD[1:88,]
-print(TD$Child.ID)
 
-TD<- TD[1:88,]
-print(TD$Child.ID)
+#geting only 15 Children, by taking from the top for ASD.
+ASD<- ASD[1:85,]
+
+df3<-rbind(TD,ASD)
 ```
 
 
