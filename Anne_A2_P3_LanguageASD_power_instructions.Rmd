@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load(readr, dplyr, simr, lme4)
 ```
 
 ## Welcome to the third exciting part of the Language Development in ASD exercise
@@ -37,8 +38,55 @@ You will be using:
 - powerCurve() to estimate the needed number of participants
 - extend() to simulate more participants
 
+
+- Load your dataset (both training and testing), fit your favorite model, assess power for your effects of interest (probably your interactions).
+```{r}
+df_train <- read_csv("data_clean.csv")
+df_test <- read_csv("cleantestdf.csv")
+
+# Cleaning function to remove NAs for relevant variables - 352
+completeFun <- function(data, desiredCols) {
+  completeVec <- complete.cases(data[, desiredCols])
+  return(data[completeVec, ])
+}
+df_train <- completeFun(df_train, "CHI_MLU")
+
+#removing colums we dont need
+df_train$MOT_LUstd =NULL
+df_train$CHI_LUstd =NULL
+
+#replacing the names in df_train so the names do not overlap
+df_test$Child.ID <- replace(df_test$Child.ID, 6:12, "67")
+df_test$Child.ID <- replace(df_test$Child.ID, 12:18, "68")
+df_test$Child.ID <- replace(df_test$Child.ID, 18:24, "69")
+df_test$Child.ID <- replace(df_test$Child.ID, 24:30, "70")
+df_test$Child.ID <- replace(df_test$Child.ID, 30:35, "71")
+
+df <- rbind(df_test, df_train) 
+
+
+#making it be order
+df$Child.ID <- as.factor(df$Child.ID)
+df$Child.ID <- as.numeric(df$Child.ID)
+df$Child.ID <- as.character(df$Child.ID)
+
+
+# Fitting our model
+m <- lmer(types_CHI ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df, REML = FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+
+```
+
+- Report the power analysis and comment on what you can (or cannot) use its estimates for.
+
+
 ```{r}
 
+powerV <- powerSim(m, fixed("Diagnosis:Visit"), nsim = 10)
+powerV
+powerCurveV <- powerCurve(m, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 10)
+
+plot(powerCurveV)
+print(powerCurveV)
 ```
 
 
