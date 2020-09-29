@@ -33,9 +33,8 @@ library(simr, lme4)
 ### Exercise 1
 
 How much power does your study have (if your model estimates are quite right)?
-- Load your dataset (both training and testing), fit your favorite model, assess power for your effects of interest (probably your interactions).
-- Report the power analysis and comment on what you can (or cannot) use its estimates for.
-- Test how many participants you would have to have to replicate the findings (assuming the findings are correct)
+
+
 
 N.B. Remember that main effects are tricky once you have interactions in the model (same for 2-way interactions w 3-way interactions in the model). If you want to test the power of main effects, run a model excluding the interactions.
 N.B. Check this paper: https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.12504
@@ -48,41 +47,77 @@ You will be using:
 df_train <- read.csv("data_clean.csv")
 df_test <- read.csv("cleantestdf.csv")
 
+
+#removing NAs
+# Removing NAs from certain columns
+completeFun <- function(data, desiredCols) {
+  completeVec <- complete.cases(data[, desiredCols])
+  return(data[completeVec, ])
+}
+
+df_train <- completeFun(df_train, "CHI_MLU")
+df_test <- completeFun(df_test, "CHI_MLU")
+
+df_train$MOT_LUstd =NULL
+df_train$CHI_LUstd =NULL
+df <- rbind(df_test, df_train)
+
 ```
 
 
 
 ```{r making the model}
 
-m <- lmer(types_CHI ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df_train, REML = FALSE)
+m <- lmer(types_CHI ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df_train, REML = FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+
 
 ```
 
 
+
+- Load your dataset (both training and testing), fit your favorite model, assess power for your effects of interest (probably your interactions).
 ```{r thing}
 # the one from the lecture using visit:
-powerV <- powerSim(m, fixed("Visit"), nsim = 50)
-
-fixef(m)["Visit"] <- 10
-
-powerCurveV <- powerCurve(m, fixed("Visit"), along = "Child.ID", nsim = 50)
+powerV <- powerSim(m, fixed("Diagnosis:Visit"), nsim = 10)
 powerV
+powerCurveV <- powerCurve(m, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 10)
+
 plot(powerCurveV)
+print(powerCurveV)
+```
+- Report the power analysis and comment on what you can (or cannot) use its estimates for.
+```{r}
+
 ```
 
 
 ```{r thing}
 # the one with diagnosis
-powerD <- powerSim(m, fixed("Diagnosis"), nsim = 50) # warning: "this appears to be an observed power calculation"
-powerD
+#powerV <- powerSim(m, fixed("Diagnosis:Visit"), nsim = 50)
+#powerV
 
-fixef(m)["DiagnosisTD"] <- 30
+
+#fixef(m)["DiagnosisTD"] <- 10
 # "Minimum effect size we care for"
 
 # ploting a power curve
-powerCurveD <- powerCurve(m, fixed("Diagnosis"), along = "Child.ID", nsim = 5) 
-plot(powerCurveD)
+#powerCurveD <- powerCurve(m, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50) 
+#plot(powerCurveD)
 
+```
+
+- Test how many participants you would have to have to replicate the findings (assuming the findings are correct)
+
+```{r}
+m2 <- extend(m, along = "Child.ID", n = 100)
+
+pDV2 <- powerSim(m2, fixed("Diagnosis:Visit"), nsim = 50)
+pcDV2 <- powerCurve(m2, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50)
+pDV2
+plot(pcDV2)
+
+# identifying the minimum sample size required (see: simR article)
+print(pcDV2)
 ```
 
 
@@ -107,4 +142,14 @@ Assume you have only the resources to collect 30 kids (15 with ASD and 15 TDs). 
 
 ```{r}
 
+?extend
+  
+
+
 ```
+
+
+
+
+
+
