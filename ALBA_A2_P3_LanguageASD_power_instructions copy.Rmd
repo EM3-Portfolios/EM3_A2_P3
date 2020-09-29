@@ -1,7 +1,7 @@
 ---
 title: "Assignment 1 - Language Development in ASD - Power and simulations"
-author: "[YOUR NAME]"
-date: "[DATE]"
+author: "Alba, Manon, Cecilie, Lærke Bradder"
+date: "30-09-2020"
 output: html_document
 ---
 
@@ -46,6 +46,8 @@ df_train <- read.csv("/Users/al/RStudio/Semester 3/Experimental-Methods-3/Assign
 df_test <- read.csv("/Users/al/RStudio/Semester 3/Experimental-Methods-3/Assignment 2/EM3_A2_P3/cleantestdf.csv")
 
 ```
+
+
 ```{r}
 
 #Loading the decided model
@@ -65,6 +67,18 @@ powerV <- powerSim(m, fixed("Diagnosis:Visit"), nsim = 50)
 powerCurveV <- powerCurve(m, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50)
 powerV
 plot(powerCurveV)
+print(powerCurveV)
+
+#Extend function applied to add more simulated datapooints for new children
+m2 <- extend(m, along = "Child.ID", n = 100)
+
+#Apply Power curve
+powerV2 <- powerSim(m2, fixed("Diagnosis:Visit"), nsim = 50)
+powerCurveV2 <- powerCurve(m2, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50)
+powerV2
+plot(powerCurveV2)
+print(powerCurveV2)
+
 
 ```
 
@@ -78,9 +92,25 @@ How would you perform a more conservative power analysis?
 - if your power estimates do not reach an acceptable threshold simulate additional participants and repeat the previous analysis
 - Report the power analysis and comment on what you can (or cannot) use its estimates for.
 
-```{r}
+
+```{r Exerciese 2.1 - Identify and justify a minimum effect size for each of your relevant effects}
 
 
+```
+
+```{r Exercise 2.2 - Take the model from exercise 1 and replace the effects with the minimum effect size that you'd accept.}
+
+```
+
+```{r Exercise 2.3 - Assess the power curve by Child.ID identifying an ideal number of participants to estimate each effect}
+
+```
+
+```{r Exercise 2.4 - If your power estimates do not reach an acceptable threshold simulate additional participants and repeat the previous analysis}
+
+```
+
+```{r Exercise 2.5 - Report the power analysis and comment on what you can (or cannot) use its estimates for.}
 
 ```
 
