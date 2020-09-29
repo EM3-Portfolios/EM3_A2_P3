@@ -51,8 +51,8 @@ completeFun <- function(data, desiredCols) {
   return(data[completeVec, ])
 }
 
-df_train <- completeFun(df, "CHI_MLU")
-df_test <- completeFun(df, "CHI_MLU")
+df_train <- completeFun(df_train, "CHI_MLU")
+df_test <- completeFun(df_test, "CHI_MLU")
 
 #Removing some columns from the train dataframe to be able to bind it with the test data
 df_train$MOT_LUstd <- NULL
@@ -65,13 +65,14 @@ df_test$Child.ID <- replace(df_test$Child.ID, 18:24, "69")
 df_test$Child.ID <- replace(df_test$Child.ID, 24:30, "70")
 df_test$Child.ID <- replace(df_test$Child.ID, 30:35, "71")
 
+#Creating 1 dataset made of both test and train data
+df <- rbind(df_train, df_test)
+
 #making it be in order
 df$Child.ID <- as.factor(df$Child.ID)
 df$Child.ID <- as.numeric(df$Child.ID)
 df$Child.ID <- as.character(df$Child.ID)
-
-#Creating 1 dataset made of both test and train data
-df <- rbind(df_train, df_test)
+df$Child.ID <- as.factor(df$Child.ID)
 
 #Applying function CompleteFun to binded/merged df
 #df <- completeFun(df, "CHI_MLU")
@@ -143,5 +144,19 @@ fixef()
 Assume you have only the resources to collect 30 kids (15 with ASD and 15 TDs). Identify the power for each relevant effect and discuss whether it's worth to run the study and why
 
 ```{r}
-
+# Recreating our model to the new data-subset:
+m3 <- lme4::lmer(CHI_MLU ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df3, REML = FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
 ```
+
+```{r}
+powerDV3 <- powerSim(m3, fixed("Diagnosis:Visit"), nsim = 50)
+powerCurveDV3 <- simr::powerCurve(m3, test = fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50)
+
+powerDV3
+plot(powerCurveDV3)
+print(powerCurveDV3)
+
+#The power is 82% for n=31, but we only have resources to collect data from 30 kids. The confidence interval goes from 68.56 to 91.42. Since we can't be sure that this study would be powered properly, we should have more data. However, our resources are limited to 30 children. How could we solve this dilemma? How can we be sure that the study is not underprowered but without having to use another 
+```
+
+
