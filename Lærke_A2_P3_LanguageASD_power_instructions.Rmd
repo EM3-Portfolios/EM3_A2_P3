@@ -46,6 +46,18 @@ df_train$CHI_LUstd <- NULL
 
 df_test <- read.csv("cleantestdf.csv")
 
+#replacing the names in df_train so the names do not overlap
+df_test$Child.ID <- replace(df_test$Child.ID, 6:12, "67")
+df_test$Child.ID <- replace(df_test$Child.ID, 12:18, "68")
+df_test$Child.ID <- replace(df_test$Child.ID, 18:24, "69")
+df_test$Child.ID <- replace(df_test$Child.ID, 24:30, "70")
+df_test$Child.ID <- replace(df_test$Child.ID, 30:35, "71")
+
+#making it be in order
+df$Child.ID <- as.factor(df$Child.ID)
+df$Child.ID <- as.numeric(df$Child.ID)
+df$Child.ID <- as.character(df$Child.ID)
+
 df <- rbind(df_train, df_test)
 
 # Removing NAs from certain columns
@@ -110,7 +122,26 @@ How would you perform a more conservative power analysis?
 - Report the power analysis and comment on what you can (or cannot) use its estimates for.
 
 ```{r}
+# We pick the minimum effect size of interest 1.3
 
+powerDV <- powerSim(m, fixed("Diagnosis:Visit"), nsim = 10)
+powerCurveDV <- simr::powerCurve(m, test = fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 10)
+
+fixef(m)["Diagnosis:Visit"] <- 1.5
+
+powerDV
+plot(powerCurveDV)
+print(powerCurveDV)
+
+m2 <- extend(m, along = "Child.ID", n = 100)
+
+pDV2 <- powerSim(m2, fixed("Diagnosis:Visit"), nsim = 50)
+pcDV2 <- powerCurve(m2, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50)
+pDV2
+plot(pcDV2)
+
+# identifying the minimum sample size required (see: simR article)
+print(pcDV2)
 ```
 
 
@@ -119,5 +150,37 @@ How would you perform a more conservative power analysis?
 Assume you have only the resources to collect 30 kids (15 with ASD and 15 TDs). Identify the power for each relevant effect and discuss whether it's worth to run the study and why
 
 ```{r}
+ASD <- subset(df, Diagnosis == "ASD")
+TD <- subset(df, Diagnosis == "TD")
 
+#geting only 15 Children, by taking from the top.
+TD <- TD[1:88,]
+
+ASD <- ASD[1:85,]
+
+# Binding them back together
+df3 <- rbind(TD, ASD)
+
+# Recreating our model to the new data-subset:
+m3 <- lme4::lmer(CHI_MLU ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df3, REML = FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+```
+
+
+```{r}
+powerDV3 <- powerSim(m3, fixed("Diagnosis:Visit"), nsim = 10)
+powerCurveDV3 <- simr::powerCurve(m3, test = fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 10)
+
+powerDV3
+plot(powerCurveDV3)
+print(powerCurveDV3)
+
+m3_extend <- extend(m3, along = "Child.ID", n = 100)
+
+pDV3_extend <- powerSim(m3_extend, fixed("Diagnosis:Visit"), nsim = 50)
+pcDV3_extend <- powerCurve(m3_extend, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50)
+pDV3_extend
+plot(pcDV3_extend)
+
+# identifying the minimum sample size required (see: simR article)
+print(pcDV3_extend)
 ```

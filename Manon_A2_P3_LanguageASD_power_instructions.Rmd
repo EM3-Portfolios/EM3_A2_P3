@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-pacman::p_load(readr, dplyr, simr, lme4)
+pacman::p_load(readr, dplyr, simr, lme4, tidyverse)
 ```
 
 ## Welcome to the third exciting part of the Language Development in ASD exercise
@@ -46,8 +46,21 @@ df_test <- read_csv("cleantestdf.csv")
 # whoops, we have to rbind them. but first remove CHI_MLUstd and MOT_MLUstd from df_train.
 df_train$MOT_LUstd <- NULL
 df_train$CHI_LUstd <- NULL
+
+
+#replacing the names in df_train so the names do not overlap
+df_test$Child.ID <- replace(df_test$Child.ID, 6:12, "67")
+df_test$Child.ID <- replace(df_test$Child.ID, 12:18, "68")
+df_test$Child.ID <- replace(df_test$Child.ID, 18:24, "69")
+df_test$Child.ID <- replace(df_test$Child.ID, 24:30, "70")
+df_test$Child.ID <- replace(df_test$Child.ID, 30:35, "71")
+
 df <- rbind(df_train, df_test)
 
+#making it be in order
+df$Child.ID <- as.factor(df$Child.ID)
+df$Child.ID <- as.numeric(df$Child.ID)
+df$Child.ID <- as.character(df$Child.ID)
 
 # Cleaning function to remove NAs for relevasnt varibales - 352
 completeFun <- function(data, desiredCols) {
@@ -57,7 +70,7 @@ completeFun <- function(data, desiredCols) {
 df <- completeFun(df, "CHI_MLU")
 
 # Fitting our favorite model
-m <- lmer(CHI_MLU ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), data = df, REML = FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+m <- lmerTest::lmer(CHI_MLU ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), data = df, REML = FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
 
 summary(m)
 
@@ -65,8 +78,8 @@ summary(m)
 ```
 
 ```{r Exercise 1.1 & 1.2 - Assessing power for effects}
-powerDV <- powerSim(m, fixed("Diagnosis:Visit"), nsim = 10)
-powerCurveDV <- powerCurve(m, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 10)
+powerDV <- powerSim(m, fixed("Diagnosis:Visit"), nsim = 50)
+powerCurveDV <- powerCurve(m, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50)
 powerDV
 plot(powerCurveDV)
 print(powerCurveDV)
@@ -75,10 +88,10 @@ print(powerCurveDV)
 ```
 ```{r Exercise 1.3 - Using the extend() function to test how many participants we would need to replicate the results}
 # when nsim=10 as opposed to 50 it does look more like we need more info in order to properly estimate power. (in the above chunk)
-m2 <- extend(m, along = "Child.ID", n = 100)
+m2 <- extend(m, along = "Child.ID", n = 10)
 
-pDV2 <- powerSim(m2, fixed("Diagnosis:Visit"), nsim = 50)
-pcDV2 <- powerCurve(m2, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50)
+pDV2 <- powerSim(m2, fixed("Diagnosis:Visit"), nsim = 5)
+pcDV2 <- powerCurve(m2, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 5)
 pDV2
 plot(pcDV2)
 
@@ -107,6 +120,10 @@ How would you perform a more conservative power analysis?
 - Report the power analysis and comment on what you can (or cannot) use its estimates for.
 
 ```{r Exerciese 2.1 - Identify and justify a minimum effect size for each of your relevant effects}
+# "what's the smallest interesting difference that diagnosis makes, and what is the smallest interesting difference that visit makes?"
+
+ggplot(df, aes(y = CHI_MLU, x = Visit, color = Diagnosis)) + 
+  geom_point()
 
 ```
 
