@@ -48,15 +48,12 @@ df_train <- read.csv("data_clean.csv")
 df_test <- read.csv("cleantestdf.csv")
 
 
-#removing NAs
 # Removing NAs from certain columns
 completeFun <- function(data, desiredCols) {
   completeVec <- complete.cases(data[, desiredCols])
   return(data[completeVec, ])
 }
 
-df_train <- completeFun(df_train, "CHI_MLU")
-df_test <- completeFun(df_test, "CHI_MLU")
 
 #removing colums we dont need
 df_train$MOT_LUstd =NULL
@@ -69,11 +66,15 @@ df_test$Child.ID <- replace(df_test$Child.ID, 18:24, "69")
 df_test$Child.ID <- replace(df_test$Child.ID, 24:30, "70")
 df_test$Child.ID <- replace(df_test$Child.ID, 30:35, "71")
 
+df <- rbind(df_test, df_train)
+
+df <- completeFun(df, "CHI_MLU")
+
 #making it be in other
 df$Child.ID <- as.factor(df$Child.ID)
 df$Child.ID <- as.numeric(df$Child.ID)
+df$Child.ID <- as.character(df$Child.ID)
 
-df <- rbind(df_test, df_train)
 
 
 ```
@@ -83,7 +84,6 @@ df <- rbind(df_test, df_train)
 ```{r making the model}
 
 m <- lmer(types_CHI ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df, REML = FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
-
 
 ```
 
@@ -166,12 +166,21 @@ ASD<- ASD[1:85,]
 
 df3<-rbind(TD,ASD)
 
-
+m3 <- lme4::lmer(CHI_MLU ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df3, REML = FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
 
 ```
 
 
 
+```{r}
+power3 <- powerSim(m, fixed("Diagnosis:Visit"), nsim = 10)
+power3
+powerCurve3 <- powerCurve(m, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 10)
+
+plot(powerCurve3)
+print(powerCurve3)
+
+```
 
 
 
