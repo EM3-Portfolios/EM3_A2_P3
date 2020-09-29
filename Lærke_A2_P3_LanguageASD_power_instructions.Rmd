@@ -41,15 +41,63 @@ You will be using:
 pacman::p_load(simr, lme4)
 
 df_train <- read.csv("data_clean.csv")
+df_train$MOT_LUstd <- NULL
+df_train$CHI_LUstd <- NULL
 
 df_test <- read.csv("cleantestdf.csv")
+
+df <- rbind(df_train, df_test)
+
+# Removing NAs from certain columns
+completeFun <- function(data, desiredCols) {
+  completeVec <- complete.cases(data[, desiredCols])
+  return(data[completeVec, ])
+}
+
+df <- completeFun(df, "CHI_MLU")
+
 ```
 
 
 
 ```{r recreating model}
-m <- lmer(Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df_train)
+m <- lme4::lmer(CHI_MLU ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df, REML = FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+
 ```
+
+```{r Assessing power}
+powerDV <- powerSim(m, fixed("Diagnosis:Visit"), nsim = 10)
+powerCurveDV <- simr::powerCurve(m, test = fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 10)
+powerDV
+plot(powerCurveDV)
+print(powerCurveDV)
+```
+
+```{r}
+# when nsim=10 as opposed to 50 it does look more like we need more info in order to properly estimate power. (in the above chunk)
+m2 <- extend(m, along = "Child.ID", n = 100)
+
+pDV2 <- powerSim(m2, fixed("Diagnosis:Visit"), nsim = 50)
+pcDV2 <- powerCurve(m2, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50)
+pDV2
+plot(pcDV2)
+
+# identifying the minimum sample size required (see: simR article)
+print(pcDV2)
+# It seems, when n= and nsim= are increased, that only around 20 participants would be needed for the power of the interaction to be 80%
+# Perhaps even less than 20. we actually don't even need to extend(m) because we already have 66 participants, which is enough to
+# use the print(powerCurveDV) function to identify that after 25 participants (25 values of Child.ID) neither the power nor the confidence
+# interval is changing any more.
+
+
+# increasing the n= in extend() doesn't seem to make power estimations more precise, but just gives us a longer x axis to work with so to speak
+# increasion the nsim= in powerSim() and powerCurve however does.
+# These functions will be useful together if: like with the powerCurveD we would see we may need up to 70 or 80 children to see anything.
+```
+
+
+
+
 
 
 ### Exercise 2
