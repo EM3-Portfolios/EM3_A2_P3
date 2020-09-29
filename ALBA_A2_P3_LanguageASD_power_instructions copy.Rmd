@@ -45,21 +45,43 @@ pacman::p_load(lmerTest, simr, lme4)
 df_train <- read.csv("/Users/al/RStudio/Semester 3/Experimental-Methods-3/Assignment 2/EM3_A2_P3/data_clean.csv")
 df_test <- read.csv("/Users/al/RStudio/Semester 3/Experimental-Methods-3/Assignment 2/EM3_A2_P3/cleantestdf.csv")
 
-```
-
-
-```{r}
-
-#Loading the decided model
-m <- lmer(CHI_MLU ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df_train, REML=FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
-
 #Deleting NAs from the columns/variables that we are interested in
 completeFun <- function(data, desiredCols) {
   completeVec <- complete.cases(data[, desiredCols])
   return(data[completeVec, ])
 }
 
-df_train <- completeFun(df_train, "CHI_MLU")
+df_train <- completeFun(df, "CHI_MLU")
+df_test <- completeFun(df, "CHI_MLU")
+
+#Removing some columns from the train dataframe to be able to bind it with the test data
+df_train$MOT_LUstd <- NULL
+df_train$CHI_LUstd <- NULL
+
+#replacing the names in df_train so the names do not overlap
+df_test$Child.ID <- replace(df_test$Child.ID, 6:12, "67")
+df_test$Child.ID <- replace(df_test$Child.ID, 12:18, "68")
+df_test$Child.ID <- replace(df_test$Child.ID, 18:24, "69")
+df_test$Child.ID <- replace(df_test$Child.ID, 24:30, "70")
+df_test$Child.ID <- replace(df_test$Child.ID, 30:35, "71")
+
+#making it be in order
+df$Child.ID <- as.factor(df$Child.ID)
+df$Child.ID <- as.numeric(df$Child.ID)
+df$Child.ID <- as.character(df$Child.ID)
+
+#Creating 1 dataset made of both test and train data
+df <- rbind(df_train, df_test)
+
+#Applying function CompleteFun to binded/merged df
+#df <- completeFun(df, "CHI_MLU")
+```
+
+
+```{r}
+
+#Loading the decided model
+m <- lmer(CHI_MLU ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df, REML=FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
 
 #Assessing power for our effects of interest
 powerV <- powerSim(m, fixed("Diagnosis:Visit"), nsim = 50)
@@ -93,8 +115,9 @@ How would you perform a more conservative power analysis?
 - Report the power analysis and comment on what you can (or cannot) use its estimates for.
 
 
-```{r Exerciese 2.1 - Identify and justify a minimum effect size for each of your relevant effects}
-
+```{r Exercise 2.1 - Identify and justify a minimum effect size for each of your relevant effects}
+#We're deciding to set the effect size 
+fixef()
 
 ```
 
