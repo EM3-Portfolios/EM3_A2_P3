@@ -43,15 +43,21 @@ You will be using:
 df_train <- read_csv("data_clean.csv")
 df_test <- read_csv("cleantestdf.csv")
 
+# whoops, we have to rbind them. but first remove CHI_MLUstd and MOT_MLUstd from df_train.
+df_train$MOT_LUstd <- NULL
+df_train$CHI_LUstd <- NULL
+df <- rbind(df_train, df_test)
+
+
 # Cleaning function to remove NAs for relevasnt varibales - 352
 completeFun <- function(data, desiredCols) {
   completeVec <- complete.cases(data[, desiredCols])
   return(data[completeVec, ])
 }
-df_train <- completeFun(df_train, "CHI_MLU")
+df <- completeFun(df, "CHI_MLU")
 
 # Fitting our favorite model
-m <- lmer(CHI_MLU ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), data = df_train, REML = FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+m <- lmer(CHI_MLU ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), data = df, REML = FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
 
 summary(m)
 
