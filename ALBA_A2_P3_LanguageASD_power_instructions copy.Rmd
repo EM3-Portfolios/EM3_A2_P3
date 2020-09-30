@@ -153,8 +153,8 @@ powerDV3 <- powerSim(m3, fixed("Diagnosis:Visit"), nsim = 50)
 powerCurveDV3 <- simr::powerCurve(m3, test = fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50)
 
 powerDV3
-plot(powerCurveDV3)
 print(powerCurveDV3)
+plot(powerCurveDV3)
 
 #The power is 82% for n=31, but we only have resources to collect data from 30 kids. The confidence interval goes from 68.56 to 91.42. Since we can't be sure that this study would be powered properly, we should have more data. However, our resources are limited to 30 children. How could we solve this dilemma? How can we be sure that the study is not underprowered but without having to use another 
 ```

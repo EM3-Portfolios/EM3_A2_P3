@@ -62,4 +62,21 @@ Assume you have only the resources to collect 30 kids (15 with ASD and 15 TDs). 
 
 ```{r}
 
+ASD <- subset(df, Diagnosis == "ASD")
+TD <- subset(df, Diagnosis == "TD")
+
+#geting only 15 Children, by taking from the top.
+TD <- TD[TD$Child.ID %in%sample(unique(TD$Child.ID), 15, replace = FALSE),]
+TD <- as.data.frame(TD)
+
+ASD <- ASD[ASD$Child.ID %in%sample(unique(ASD$Child.ID), 15, replace = FALSE),]
+ASD <- as.data.frame(ASD)
+
+# Binding them back together
+df3 <- rbind(TD, ASD)
+
+# Because if each studygroup member runs this code, then we will get different df's (because it is random)
+write.csv(df3, "df3.csv")
+
+df3 <- read.csv("df3.csv")
 ```
