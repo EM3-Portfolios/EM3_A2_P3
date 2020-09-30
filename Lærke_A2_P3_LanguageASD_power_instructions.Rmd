@@ -38,13 +38,13 @@ You will be using:
 - extend() to simulate more participants
 
 ```{r loading data}
-pacman::p_load(simr, lme4)
+pacman::p_load(simr, lme4, tidyverse)
 
-df_train <- read.csv("data_clean.csv")
+df_train <- read_csv("data_clean.csv")
 df_train$MOT_LUstd <- NULL
 df_train$CHI_LUstd <- NULL
 
-df_test <- read.csv("cleantestdf.csv")
+df_test <- read_csv("cleantestdf.csv")
 
 
 class(df_train$Child.ID)
@@ -115,15 +115,15 @@ print(powerCurveDV)
 
 ```{r}
 # when nsim=10 as opposed to 50 it does look more like we need more info in order to properly estimate power. (in the above chunk)
-m2 <- extend(m, along = "Child.ID", n = 100)
+m1 <- extend(m, along = "Child.ID", n = 100)
 
-pDV2 <- powerSim(m2, fixed("Diagnosis:Visit"), nsim = 50)
-pcDV2 <- powerCurve(m2, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50)
-pDV2
-plot(pcDV2)
+pDV1 <- powerSim(m2, fixed("Diagnosis:Visit"), nsim = 50)
+pcDV1 <- powerCurve(m2, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50)
+pDV1
+plot(pcDV1)
 
 # identifying the minimum sample size required (see: simR article)
-print(pcDV2)
+print(pcDV1)
 # It seems, when n= and nsim= are increased, that only around 20 participants would be needed for the power of the interaction to be 80%
 # Perhaps even less than 20. we actually don't even need to extend(m) because we already have 66 participants, which is enough to
 # use the print(powerCurveDV) function to identify that after 25 participants (25 values of Child.ID) neither the power nor the confidence
@@ -150,26 +150,27 @@ How would you perform a more conservative power analysis?
 - Report the power analysis and comment on what you can (or cannot) use its estimates for.
 
 ```{r}
-# We pick the minimum effect size of interest 1.3
+m2 <- lme4::lmer(CHI_MLU ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df, REML = FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE)) # This is the same model as m, but I just put it here, because we are going to tamper with it.
 
+# We pick the minimum effect size of interest 0.15
 powerDV_2 <- powerSim(m, fixed("Diagnosis:Visit"), nsim = 10)
 powerCurveDV_2 <- simr::powerCurve(m, test = fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 10)
 
-fixef(m)["DiagnosisTD:Visit"] <- 0.14
+fixef(m)["DiagnosisTD:Visit"] <- 0.15
 
-powerDV
+powerDV_2
 plot(powerCurveDV_2)
 print(powerCurveDV_2)
 
 m2 <- extend(m, along = "Child.ID", n = 100)
 
-pDV2 <- powerSim(m2, fixed("DiagnosisTD:Visit"), nsim = 50)
-pcDV2 <- powerCurve(m2, fixed("DiagnosisTD:Visit"), along = "Child.ID", nsim = 50)
-pDV2
+pDV_2.2 <- powerSim(m2, fixed("DiagnosisTD:Visit"), nsim = 50)
+pcDV_2.2 <- powerCurve(m2, fixed("DiagnosisTD:Visit"), along = "Child.ID", nsim = 50)
+pDV_2.2
 plot(pcDV2)
 
 # identifying the minimum sample size required (see: simR article)
-print(pcDV2)
+print(pcDV_2.2)
 ```
 
 
