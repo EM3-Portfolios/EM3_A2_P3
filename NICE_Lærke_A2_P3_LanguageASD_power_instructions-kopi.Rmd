@@ -1,29 +1,27 @@
 ---
 title: "Assignment 1 - Language Development in ASD - Power and simulations"
-author: "Manon Grandjean"
+author: "[YOUR NAME]"
 date: "[DATE]"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-pacman::p_load(readr, dplyr, simr, lme4, tidyverse)
 ```
 
 ## Welcome to the third exciting part of the Language Development in ASD exercise
 
-In this part of the assignment, we try to figure out how a new study should be planned (i.e. how many participants?) in order to have enough power to replicate the findings (ensuring our sample size is adequate, our alpha at 0.05 and our beta at 0.8)
+In this part of the assignment, we try to figure out how a new study should be planned (i.e. how many participants?) in order to have enough power to replicate the findings (ensuring our sample size is adequate, our alpha at 0.05 and our beta at 0.8):
 1- if we trust the estimates of the current study. Report the power analysis and comment on what you can (or cannot) use its estimates for.
 2- if we are skeptical of the current study. Report the power analysis and comment on what you can (or cannot) use its estimates for.
 3- if we only have access to 30 participants. Identify the power for each relevant effect and discuss whether it's worth to run the study and why
 The list above is also what you should discuss in your code-less report.
 
+
 ## Learning objectives
 
 - Learn how to calculate statistical power
 - Critically appraise how to apply frequentist statistical power
-
-
 
 ### Exercise 1
 
@@ -39,59 +37,60 @@ You will be using:
 - powerCurve() to estimate the needed number of participants
 - extend() to simulate more participants
 
-```{r Exercise 1.1 - Loading the data and fitting our favorite model}
-df_train <- read_csv("data_clean.csv")
-df_test <- read_csv("cleantestdf.csv")
+```{r loading data}
+pacman::p_load(simr, lme4)
 
-# whoops, we have to rbind them. but first remove CHI_MLUstd and MOT_MLUstd from df_train.
+df_train <- read.csv("data_clean.csv")
 df_train$MOT_LUstd <- NULL
 df_train$CHI_LUstd <- NULL
 
+df_test <- read.csv("cleantestdf.csv")
 
-#replacing the names in df_train so the names do not overlap
-df_test$Child.ID <- replace(df_test$Child.ID, 6:12, "67")
-df_test$Child.ID <- replace(df_test$Child.ID, 12:18, "68")
-df_test$Child.ID <- replace(df_test$Child.ID, 18:24, "69")
-df_test$Child.ID <- replace(df_test$Child.ID, 24:30, "70")
-df_test$Child.ID <- replace(df_test$Child.ID, 30:35, "71")
+
+class(df_train$Child.ID)
+class(df_test$Child.ID)
+
+df_test$Child.ID <- dplyr::recode(df_test$Child.ID, `1` = 67L, `2` = 68L, `3` = 69L, `4` = 70L, `5` = 71L, `6` = 72L)
+
+df_test$Child.ID <- as.numeric(df_test$Child.ID)
+
 
 df <- rbind(df_train, df_test)
+class(df$Child.ID)
 
-#making it be in order
-df$Child.ID <- as.factor(df$Child.ID)
-df$Child.ID <- as.numeric(df$Child.ID)
-df$Child.ID <- as.character(df$Child.ID)
-
-# Cleaning function to remove NAs for relevasnt varibales - 352
+# Removing NAs from certain columns
 completeFun <- function(data, desiredCols) {
   completeVec <- complete.cases(data[, desiredCols])
   return(data[completeVec, ])
 }
+
 df <- completeFun(df, "CHI_MLU")
+df_train <- completeFun(df_train, "CHI_MLU")
 
-# Fitting our favorite model
-m <- lmer(CHI_MLU ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), data = df, REML = FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
-
-summary(m)
-
-# and how was it again that we should interpret the estimates of the fixed effetcs when there is an interaction?
 ```
 
-```{r Exercise 1.1 & 1.2 - Assessing power for effects}
-powerDV <- powerSim(m, fixed("Diagnosis:Visit"), nsim = 10)
-powerCurveDV <- powerCurve(m, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 10)
+
+```{r recreating model}
+m <- lme4::lmer(CHI_MLU ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df, REML = FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+
+```
+
+
+```{r Assessing power}
+powerDV <- powerSim(m, fixed("Diagnosis:Visit"), nsim = 50)
+powerCurveDV <- simr::powerCurve(m, test = fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50)
 powerDV
 plot(powerCurveDV)
 print(powerCurveDV)
-
-# So if (when nsim=50) the first time the dot and the bars are over 80% is around 25 participants, does this mean that we would only need 25 participants before the interaction had sufficient power?
 ```
-```{r Exercise 1.3 - Using the extend() function to test how many participants we would need to replicate the results}
+
+
+```{r}
 # when nsim=10 as opposed to 50 it does look more like we need more info in order to properly estimate power. (in the above chunk)
 m2 <- extend(m, along = "Child.ID", n = 100)
 
-pDV2 <- powerSim(m2, fixed("Diagnosis:Visit"), nsim = 5)
-pcDV2 <- powerCurve(m2, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 5)
+pDV2 <- powerSim(m2, fixed("Diagnosis:Visit"), nsim = 50)
+pcDV2 <- powerCurve(m2, fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50)
 pDV2
 plot(pcDV2)
 
@@ -110,6 +109,9 @@ print(pcDV2)
 
 
 
+
+
+
 ### Exercise 2
 
 How would you perform a more conservative power analysis?
@@ -119,36 +121,68 @@ How would you perform a more conservative power analysis?
 - if your power estimates do not reach an acceptable threshold simulate additional participants and repeat the previous analysis
 - Report the power analysis and comment on what you can (or cannot) use its estimates for.
 
-```{r Exerciese 2.1 - Identify and justify a minimum effect size for each of your relevant effects}
-# "what's the smallest interesting difference that diagnosis makes, and what is the smallest interesting difference that visit makes?"
+```{r}
+# We pick the minimum effect size of interest 1.3
 
-ggplot(df, aes(y = CHI_MLU, x = Visit, color = Diagnosis)) + 
-  geom_point()
+powerDV_2 <- powerSim(m, fixed("Diagnosis:Visit"), nsim = 10)
+powerCurveDV_2 <- simr::powerCurve(m, test = fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 10)
 
+fixef(m)["DiagnosisTD:Visit"] <- 0.14
+
+powerDV
+plot(powerCurveDV_2)
+print(powerCurveDV_2)
+
+m2 <- extend(m, along = "Child.ID", n = 100)
+
+pDV2 <- powerSim(m2, fixed("DiagnosisTD:Visit"), nsim = 50)
+pcDV2 <- powerCurve(m2, fixed("DiagnosisTD:Visit"), along = "Child.ID", nsim = 50)
+pDV2
+plot(pcDV2)
+
+# identifying the minimum sample size required (see: simR article)
+print(pcDV2)
 ```
-
-```{r Exercise 2.2 - Take the model from exercise 1 and replace the effects with the minimum effect size that you'd accept.}
-
-```
-
-```{r Exercise 2.3 - Assess the power curve by Child.ID identifying an ideal number of participants to estimate each effect}
-
-```
-
-```{r Exercise 2.4 - If your power estimates do not reach an acceptable threshold simulate additional participants and repeat the previous analysis}
-
-```
-
-```{r Exercise 2.5 - Report the power analysis and comment on what you can (or cannot) use its estimates for.}
-
-```
-
 
 
 ### Exercise 3
 
 Assume you have only the resources to collect 30 kids (15 with ASD and 15 TDs). Identify the power for each relevant effect and discuss whether it's worth to run the study and why
 
-```{r Exercise 3.1 - Identify power if we could only study 30 participants (observations and participants / stimli balance?)}
+```{r}
+ASD <- subset(df, Diagnosis == "ASD")
+TD <- subset(df, Diagnosis == "TD")
+
+#geting only 15 Children, by taking from the top.
+TD <- TD[TD$Child.ID %in%sample(unique(TD$Child.ID), 15, replace = FALSE),]
+TD <- as.data.frame(TD)
+
+ASD <- ASD[ASD$Child.ID %in%sample(unique(ASD$Child.ID), 15, replace = FALSE),]
+ASD <- as.data.frame(ASD)
+
+# Binding them back together
+df3 <- rbind(TD, ASD)
+
+# Because if each studygroup member runs this code, then we will get different df's (because it is random)
+write.csv(df3, "df3.csv")
+
+df3 <- read.csv("df3.csv")
+```
+
+
+
+```{r}
+# Recreating our model to the new data-subset:
+m3 <- lme4::lmer(CHI_MLU ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df3, REML = FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+```
+
+
+```{r}
+powerDV3 <- powerSim(m3, fixed("Diagnosis:Visit"), nsim = 50)
+powerCurveDV3 <- simr::powerCurve(m3, test = fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50)
+
+powerDV3
+print(powerCurveDV3)
+plot(powerCurveDV3)
 
 ```
