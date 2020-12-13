@@ -37,7 +37,7 @@ You will be using:
 - powerCurve() to estimate the needed number of participants
 - extend() to simulate more participants
 
-```{r loading data}
+```{r loading data, Lærke}
 pacman::p_load(simr, lme4)
 
 df_train <- read.csv("data_clean.csv")
@@ -70,13 +70,13 @@ df_train <- completeFun(df_train, "CHI_MLU")
 ```
 
 
-```{r recreating model}
+```{r recreating model, Lærke}
 m <- lme4::lmer(CHI_MLU ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df, REML = FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
 
 ```
 
 
-```{r Assessing power}
+```{r Assessing power, Alba}
 powerDV <- powerSim(m, fixed("Diagnosis:Visit"), nsim = 50)
 powerCurveDV <- simr::powerCurve(m, test = fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50)
 powerDV
@@ -85,7 +85,7 @@ print(powerCurveDV)
 ```
 
 
-```{r}
+```{r, ALba}
 # when nsim=10 as opposed to 50 it does look more like we need more info in order to properly estimate power. (in the above chunk)
 m1 <- extend(m, along = "Child.ID", n = 100)
 
@@ -121,7 +121,7 @@ How would you perform a more conservative power analysis?
 - if your power estimates do not reach an acceptable threshold simulate additional participants and repeat the previous analysis
 - Report the power analysis and comment on what you can (or cannot) use its estimates for.
 
-```{r exercise 2}
+```{r exercise 2, Manon}
 fixef(m)["DiagnosisTD:Visit"]
 # The current effect size for the interaction is 0.25
 
@@ -156,7 +156,7 @@ print(pcDV2_4)
 
 Assume you have only the resources to collect 30 kids (15 with ASD and 15 TDs). Identify the power for each relevant effect and discuss whether it's worth to run the study and why
 
-```{r}
+```{r, Anne}
 ASD <- subset(df, Diagnosis == "ASD")
 TD <- subset(df, Diagnosis == "TD")
 
@@ -178,13 +178,13 @@ df3 <- read.csv("df3.csv")
 
 
 
-```{r}
+```{r, Cecilie}
 # Recreating our model to the new data-subset:
 m3 <- lme4::lmer(CHI_MLU ~ Diagnosis * Visit + (1 + Visit + I(Visit^2) | Child.ID), df3, REML = FALSE, lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
 ```
 
 
-```{r}
+```{r, Cecilie}
 powerDV3 <- powerSim(m3, fixed("Diagnosis:Visit"), nsim = 50)
 powerCurveDV3 <- simr::powerCurve(m3, test = fixed("Diagnosis:Visit"), along = "Child.ID", nsim = 50)
 
